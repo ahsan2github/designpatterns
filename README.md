@@ -1,6 +1,8 @@
 Common Design Patterns, how to send different observers different data
 
-### One-to-many interaction ... Observer pattern 
+# one-to-many interaction
+
+## Observer pattern 
 
 ```c++
 #include <iostream>
