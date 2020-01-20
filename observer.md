@@ -1,4 +1,4 @@
-# one - to - many interaction
+# one-to-many interaction
 
 ## Observer pattern 
 
@@ -7,33 +7,33 @@
 #include <memory>
 #include <set>
 
-    struct WData {
+struct WData {
   float temp;
   float humidity;
 };
 
 class Observer {
-public:
-  Observer() = default;
-  virtual ~Observer() = default;
-  virtual void update(const WData &data) = 0;
+  public:
+    Observer() = default;
+    virtual ~Observer() = default;
+    virtual void update(const WData &data) = 0;
 };
 
 class Subject {
-public:
-  Subject() = default;
-  virtual ~Subject() = default;
-  virtual void registerObserver(std::shared_ptr<Observer> obs) = 0;
-  virtual void unregisterObserver(std::shared_ptr<Observer> obs) = 0;
-  virtual void notifyObserver() = 0;
+  public:
+    Subject() = default;
+    virtual ~Subject() = default;
+    virtual void registerObserver(std::shared_ptr<Observer> obs) = 0;
+    virtual void unregisterObserver(std::shared_ptr<Observer> obs) = 0;
+    virtual void notifyObserver() = 0;
 };
 
 class Communication {
-public:
-  Communication() = default;
-  ~Communication() = default;
-  virtual void sendData();
-  virtual bool receiveData();
+  public:
+    Communication() = default;
+    ~Communication() = default;
+    virtual void sendData();
+    virtual bool receiveData();
 };
 void Communication::sendData() {}
 bool Communication::receiveData() {}
@@ -57,16 +57,16 @@ void NationalParkService::update(const WData &data) {
 }
 
 class Weather : public Communication, public Subject {
-public:
-  Weather(float temp, float humidity);
-  ~Weather();
-  void registerObserver(std::shared_ptr<Observer> obs) override;
-  void unregisterObserver(std::shared_ptr<Observer> obs) override;
-  void notifyObserver() override;
+  public:
+    Weather(float temp, float humidity);
+    ~Weather();
+    void registerObserver(std::shared_ptr<Observer> obs) override;
+    void unregisterObserver(std::shared_ptr<Observer> obs) override;
+    void notifyObserver() override;
 
-private:
-  WData m_data;
-  std::set<std::shared_ptr<Observer>> m_observerPtrs;
+  private:
+    WData m_data;
+    std::set<std::shared_ptr<Observer>> m_observerPtrs;
 };
 
 Weather::Weather(float temp, float humidity) : m_data{temp, humidity} {
