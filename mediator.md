@@ -1,80 +1,88 @@
 # Mediator pattern
 ## Many-to-many interaction
 
-```ctc++
-
+```c++
 #include <iostream>
 #include <set>
+#include <memory>
 
 struct Condition{
 	int RoadHazard;
 };
+
 class IMediator;
+class ISubject;
 
 class ISubject{
+    public:
 	ISubject() = default;
 	~ISubject() = default;
-	virtual void sendMessage(IMediator* subject) = 0;
+	virtual void sendMessage(std::shared_ptr<IMediator> mediator) = 0;
 	virtual void receiveMessage(const Condition& data) = 0;
 };
 
+
 class IMediator{
+    public:
     IMediator() = default; 
 	~IMediator() = default;
-    virtual void register(ISubject* subject) = 0;
+	 virtual void registerSub(std::shared_ptr<ISubject> subject) = 0;
     virtual void notify(const Condition& data) = 0;
 };
 
 
 
-class Mediator: IMediator{
+class Mediator: public IMediator{
 	public:
 	  Mediator();
 	  ~Mediator();
-    virtual void register(ISubject* subject) override;
-    virtual void notify(const Condition& data) override;
+      virtual void registerSub(std::shared_ptr<ISubject> subject) override;
+      virtual void notify(const Condition& data) override;
 	private:
-    std::set<ISubject> registeredObjects;
+      std::set< std::shared_ptr<ISubject> > registeredObjects;
 };
+
 Mediator::Mediator(){
 // do nothing
 }
+
 Mediator::~Mediator(){
  // do nothing
 }
 
-void Mediator::register(ISubject* subject){
-	if(registeredObjects.count(subject) == 0){
+void Mediator::registerSub(std::shared_ptr<ISubject> subject){
+	if(registeredObjects.find(subject) == registeredObjects.end() ){
 		registeredObjects.insert(subject);
 	}
 }
 
 void Mediator::notify(const Condition& data){
-	for(ISubject* x : 	for(ISubject* x : registeredObjects){
-		x->receiveMessage(data)
+    std::cout << "Mediator notify method called " << std::endl;
+	for(std::shared_ptr<ISubject> x : registeredObjects){
+		x->receiveMessage(data);
 	}	
 } 
 
-SomeImpClass{
-	SomeImpClass() = default;
-	~SomeImpClass() = default;
-	virtual void funding();
-	virtual void personnel();
-}
+class SomeImpClass{
+    public:
+	    SomeImpClass() = default;
+	    ~SomeImpClass() = default;
+	    virtual void funding();
+	    virtual void personnel();
+};
 
-SomeImpClass::funding{std::cout << "Funding being decided" << std::endl;}
-SomeImpClass::personnel{std::cout << "persons assigned" << std::endl;}
+void SomeImpClass::funding(){std::cout << "Funding being decided" << std::endl;}
+void SomeImpClass::personnel(){std::cout << "persons assigned" << std::endl;}
 
-class NationalParkService: SomeImpClass, ISubject{
+class NationalParkService: public  SomeImpClass, public ISubject{
 	public:
 		NationalParkService();
 		NationalParkService(const Condition indata);
 		~NationalParkService();
-		virtual void sendMessage(IMediator* mediator) override;
-		virtual void receiveMessage(const Condititon& data) override;
-		void setData(const Condition& data) const;
+		virtual void sendMessage(std::shared_ptr<IMediator> mediator) override;
+		virtual void receiveMessage(const Condition& data) override;
 		Condition data;	
-}
+};
 
 NationalParkService::NationalParkService()
 {
@@ -83,29 +91,30 @@ NationalParkService::NationalParkService()
 
 NationalParkService::NationalParkService(const Condition indata): data{indata}
 {
-   // do noting
+   std::cout << "initialized data (NationalParkService) " << this-> data.RoadHazard << std::endl;
 }
 
 NationalParkService::~NationalParkService(){
 	// do noting
 }
 
-void NationalParkService::sendMessage(IMediator* mediator){
+void NationalParkService::sendMessage(std::shared_ptr<IMediator> mediator){
 	mediator->notify(this->data);
 }
-void NationalParkService::receiveMessage(const Condititon& data){
+void NationalParkService::receiveMessage(const Condition& data){
 	this->data = data;
 }
 
-class DepartmentTransportation: SomeImpClass, ISubject{
+class DepartmentTransportation: public SomeImpClass, public ISubject{
 	public:
 		DepartmentTransportation();
-		DepartmentTransportation(const Condition indata);
+		DepartmentTransportation(const Condition& indata);
 		~DepartmentTransportation();
-		virtual void sendMessage(IMediator* subject) override;
-		virtual void receiveMessage() override;
+		virtual void sendMessage(std::shared_ptr<IMediator> subject) override;
+		virtual void receiveMessage(const Condition& data) override;
 		Condition data;	
-}
+};
+
 DepartmentTransportation::DepartmentTransportation()
 {
    // do noting
@@ -119,27 +128,28 @@ DepartmentTransportation::~DepartmentTransportation(){
 	// do noting
 }
 
-void DepartmentTransportation::sendMessage(IMediator* mediator){
+void DepartmentTransportation::sendMessage(std::shared_ptr<IMediator> mediator){
 	mediator->notify(this->data);
 }
-void DepartmentTransportation::receiveMessage(const Condititon& data){
+void DepartmentTransportation::receiveMessage(const Condition& data){
 	this->data = data;
 }
 
 int main(){
     
-    Mediator mediator;
+    std::shared_ptr<IMediator> mediator = std::make_shared<Mediator>();
     Condition pcond{10};
-    NationalParkService park(pcond);
-    DepartmentTransportation trans;
-    mediator.register(&park);
-    mediator.register(&trans);
-    park.sendMessage(*mediator);
-    std::cout << "trans.data.RoadHazard " << trans.data.RoadHazard << std::endl;
-    std::cout << "park.data.RoadHazard " << park.data.RoadHazard << std::endl;
+    std::shared_ptr<SomeImpClass> park = std::make_shared<NationalParkService>(pcond);
+    std::shared_ptr<SomeImpClass> trans = std::make_shared<DepartmentTransportation>();
+    mediator->registerSub(std::dynamic_pointer_cast<ISubject>(park));
+    mediator->aregisterSub(std::dynamic_pointer_cast<ISubject>(trans));
+    std::dynamic_pointer_cast<ISubject>(park)->sendMessage(mediator);
+    std::cout << "trans->data.RoadHazard " << std::dynamic_pointer_cast<DepartmentTransportation>(trans)->data.RoadHazard << std::endl;
+    std::cout << "park->data.RoadHazard " << std::dynamic_pointer_cast<NationalParkService>(park)->data.RoadHazard << std::endl;
    
     return 0;
 }
+
 
 ```
 
